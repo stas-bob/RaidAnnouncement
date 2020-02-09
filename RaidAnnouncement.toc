@@ -1,0 +1,9 @@
+## Interface: 11303
+## Author: Devchonka-Patchwerk
+## Version: 3.2
+## Title: RaidAnnouncement
+## Notes: RaidAnnouncement
+## DefaultState:  enabled
+## SavedVariables: InRaidVar, InPartyVar, InRaidWarningVar, LastStandVar, ShieldWallVar
+
+main.lua
