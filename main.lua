@@ -1,9 +1,11 @@
+--todo
+--add deathwish
 
-function newHandler (a, b)
+function newHandler (inSpellId, inExecution)
   local handler = {
     auraPresence = 0,
-	spellId = a,
-	execution = b
+	spellId = inSpellId,
+	execution = inExecution
   }
   return handler
 end
@@ -21,27 +23,27 @@ function handleAuraEvent(myTab)
     if myTab.auraPresence == 0 then
       myTab.auraPresence = 1
       local playerName = UnitName("player");
-      myTab.execution(playerName)
+      myTab.execution(playerName, myTab)
     end
   else
     myTab.auraPresence = 0
   end
 end
 
-function newMyTickHandler (a, b)
-  local myTickHandler = {maxTicks = a, auraName = b}
-  return myTickHandler
-end
-
-function handleTick(myTab, timeObj)
-  if myTab.maxTicks < 0 then
+function handleTick(tickState, myTab, timeObj)
+  if tickState.maxTicks < 0 then
     timeObj:Cancel()
-  elseif myTab.maxTicks == 0 then
-    announce(format("%s ENDED", myTab.auraName))
-  elseif myTab.maxTicks < 5 then
-    announce(format("%s ends in %ds", myTab.auraName, myTab.maxTicks))
+  else
+    if myTab.auraPresence == 0 then
+      tickState.maxTicks = 0
+    end
+    if tickState.maxTicks == 0 then
+      announce(format("%s ENDED", tickState.auraName))
+    elseif tickState.maxTicks < 5 then
+      announce(format("%s ends in %ds", tickState.auraName, tickState.maxTicks))
+    end
   end
-  myTab.maxTicks = myTab.maxTicks-1
+  tickState.maxTicks = tickState.maxTicks-1
 end
 
 function announce(msg)
@@ -51,26 +53,28 @@ function announce(msg)
 	end
 	
 	SendChatMessage(msg, channel)
+	--print(msg)
 end
 
-function lastStand(player)
+function lastStand(player, myTab)
   announce("LAST STAND ON " .. player)
-  local myTab = newMyTickHandler(18, "Last Stand")
-  C_Timer.NewTicker(1, function(timerObj) handleTick(myTab, timerObj) end)
+  local tickState = {maxTicks = 18, auraName = "Last Stand"}
+  C_Timer.NewTicker(1, function(timerObj) handleTick(tickState, myTab, timerObj) end)
 end
 
-function shieldWall(player)
+function shieldWall(player, myTab)
   announce("SHIELD WALL ON " .. player)
-  local myTab = newMyTickHandler(8, "Shield Wall")
-  C_Timer.NewTicker(1, function(timerObj) handleTick(myTab, timerObj) end)
+  local tickState = {maxTicks = 8, auraName = "Shield Wall"}
+  C_Timer.NewTicker(1, function(timerObj) handleTick(tickState, myTab, timerObj) end)
 end
 
-
---function berserkerRage(player)
---  announce("BERSERKER RAGE ON " .. player)
---  local myTab = newMyTickHandler(8, "Berserker Rage")
---  C_Timer.NewTicker(1, function(timerObj) handleTick(myTab, timerObj) end)
---end
+--[[
+function berserkerRage(player, myTab)
+  announce("BERSERKER RAGE ON " .. player)
+  local tickState = {maxTicks = 8, auraName = "Berserker Rage"}
+  C_Timer.NewTicker(1, function(timerObj) handleTick(tickState, myTab, timerObj) end)
+end
+--]]
 
 
 local lastStandHandler = newHandler(12976, lastStand)
