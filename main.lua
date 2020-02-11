@@ -39,7 +39,7 @@ function handleTick(tickState, myTab, timeObj)
     end
     if tickState.maxTicks == 0 then
       announce(format("%s ENDED", tickState.auraName))
-    elseif tickState.maxTicks < 5 then
+    elseif tickState.maxTicks <= tickState.countDown then
       announce(format("%s ends in %ds", tickState.auraName, tickState.maxTicks))
     end
   end
@@ -58,20 +58,20 @@ end
 
 function lastStand(player, myTab)
   announce("LAST STAND ON " .. player)
-  local tickState = {maxTicks = 18, auraName = "Last Stand"}
+  local tickState = {maxTicks = 18, auraName = "Last Stand", countDown = LastStandCountDownVar}
   C_Timer.NewTicker(1, function(timerObj) handleTick(tickState, myTab, timerObj) end)
 end
 
 function shieldWall(player, myTab)
   announce("SHIELD WALL ON " .. player)
-  local tickState = {maxTicks = 8, auraName = "Shield Wall"}
+  local tickState = {maxTicks = 8, auraName = "Shield Wall", countDown = ShieldWallCountDownVar}
   C_Timer.NewTicker(1, function(timerObj) handleTick(tickState, myTab, timerObj) end)
 end
 
 --[[
 function berserkerRage(player, myTab)
   announce("BERSERKER RAGE ON " .. player)
-  local tickState = {maxTicks = 8, auraName = "Berserker Rage"}
+  local tickState = {maxTicks = 8, auraName = "Berserker Rage", countDown = LastStandCountDownVar}
   C_Timer.NewTicker(1, function(timerObj) handleTick(tickState, myTab, timerObj) end)
 end
 --]]
@@ -114,6 +114,15 @@ local eventHandle=function(self, event, arg1, ...)
    end
 end
 
+local sliderLabelUpdate = function(slider)
+  local newValue = slider:GetValue()
+  text = format("%d seconds", newValue)
+  if (newValue == 0) then
+    text = "Off"
+  end
+  getglobal(slider:GetName() .. 'Text'):SetText(text)
+end	
+
 function initUi()
 	local optionsFrame = CreateFrame( "Frame", "optionsFrame", UIParent );
 	optionsFrame.name = "RaidAnnouncement";
@@ -134,37 +143,78 @@ function initUi()
 	if ShieldWallVar == nil then
 	  ShieldWallVar = true
 	end
-	local inRaidButton = CreateFrame("CheckButton", "inRaidWarning", optionsFrame, "UICheckButtonTemplate")
+	if LastStandCountDownVar == nil then
+	  LastStandCountDownVar = 2
+	end
+	if ShieldWallCountDownVar == nil then
+	  ShieldWallCountDownVar = 2
+	end
+	local inRaidButton = CreateFrame("CheckButton", "InRaidWarningButton", optionsFrame, "UICheckButtonTemplate")
 	inRaidButton:SetPoint("TOPLEFT",0,0)
 	inRaidButton.text:SetText("Announce in /rw")
 	inRaidButton:SetChecked(InRaidWarningVar)
 	inRaidButton:SetScript("OnClick",function() InRaidWarningVar=not InRaidWarningVar end)
 	
-	local inRaidButton = CreateFrame("CheckButton", "inRaid", optionsFrame, "UICheckButtonTemplate")
+	local inRaidButton = CreateFrame("CheckButton", "InRaidButton", optionsFrame, "UICheckButtonTemplate")
 	inRaidButton:SetPoint("TOPLEFT",0,-30)
 	inRaidButton.text:SetText("Announce in /ra")
 	inRaidButton:SetChecked(InRaidVar)
 	inRaidButton:SetScript("OnClick",function() InRaidVar=not InRaidVar end)
 
-	local inPartyButton = CreateFrame("CheckButton", "inParty", optionsFrame, "UICheckButtonTemplate")
+	local inPartyButton = CreateFrame("CheckButton", "InPartyButton", optionsFrame, "UICheckButtonTemplate")
 	inPartyButton:SetPoint("TOPLEFT",0,-60)
 	inPartyButton.text:SetText("Announce in /p")
 	inPartyButton:SetChecked(InPartyVar)
 	inPartyButton:SetScript("OnClick",function() InPartyVar=not InPartyVar end)	
 	
-	local lastStandButton = CreateFrame("CheckButton", "LastStand", optionsFrame, "UICheckButtonTemplate")
+	local lastStandButton = CreateFrame("CheckButton", "LastStandButton", optionsFrame, "UICheckButtonTemplate")
 	lastStandButton:SetPoint("TOPLEFT",0,-120)
 	lastStandButton.text:SetText("Last Stand")
 	lastStandButton:SetChecked(LastStandVar)
 	lastStandButton:SetScript("OnClick",function() LastStandVar=not LastStandVar end)	
 	
-	local shieldWallButton = CreateFrame("CheckButton", "shieldWall", optionsFrame, "UICheckButtonTemplate")
+	local shieldWallButton = CreateFrame("CheckButton", "ShieldWallButton", optionsFrame, "UICheckButtonTemplate")
 	shieldWallButton:SetPoint("TOPLEFT",0,-150)
 	shieldWallButton.text:SetText("Shield Wall")
 	shieldWallButton:SetChecked(ShieldWallVar)
 	shieldWallButton:SetScript("OnClick",function() ShieldWallVar=not ShieldWallVar end)	
+	
+	local countDownSliderLastStand = CreateFrame("Slider", "CountDownSliderLastStand", optionsFrame, "OptionsSliderTemplate")
+	countDownSliderLastStand:SetOrientation('HORIZONTAL')
+	countDownSliderLastStand:SetPoint("TOPLEFT",150,-128)
+	countDownSliderLastStand:SetMinMaxValues(0, 4)
+	
+	countDownSliderLastStand:SetValueStep(1)
+	countDownSliderLastStand:SetObeyStepOnDrag(true)
+	getglobal(countDownSliderLastStand:GetName() .. 'Low'):SetText(nil)
+	getglobal(countDownSliderLastStand:GetName() .. 'High'):SetText(nil)
+    sliderLabelUpdate(countDownSliderLastStand)
+	countDownSliderLastStand:SetScript("OnValueChanged", function(self, newvalue)
+		sliderLabelUpdate(countDownSliderLastStand)
+		LastStandCountDownVar = newvalue
+    end)
+	countDownSliderLastStand:SetValue(LastStandCountDownVar)
+	
+	local countDownSliderShieldWall = CreateFrame("Slider", "CountDownSliderShieldWall", optionsFrame, "OptionsSliderTemplate")
+	countDownSliderShieldWall:SetOrientation('HORIZONTAL')
+	countDownSliderShieldWall:SetPoint("TOPLEFT",150,-158)
+	countDownSliderShieldWall:SetMinMaxValues(0, 4)
+	
+	countDownSliderShieldWall:SetValueStep(1)
+	countDownSliderShieldWall:SetObeyStepOnDrag(true)
+	getglobal(countDownSliderShieldWall:GetName() .. 'Low'):SetText(nil)
+	getglobal(countDownSliderShieldWall:GetName() .. 'High'):SetText(nil)
+    sliderLabelUpdate(countDownSliderShieldWall)
+	countDownSliderShieldWall:SetScript("OnValueChanged", function(self, newvalue)
+		sliderLabelUpdate(countDownSliderShieldWall)
+		ShieldWallCountDownVar = newvalue
+    end)
+    countDownSliderShieldWall:SetValue(ShieldWallCountDownVar)
+	  
 end
 
+
+	 
 local frame = CreateFrame("Frame")
 frame:RegisterUnitEvent ("UNIT_AURA", "player")
 frame:RegisterEvent("ADDON_LOADED");

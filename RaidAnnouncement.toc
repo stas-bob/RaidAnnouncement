@@ -4,6 +4,6 @@
 ## Title: RaidAnnouncement
 ## Notes: RaidAnnouncement
 ## DefaultState:  enabled
-## SavedVariables: InRaidVar, InPartyVar, InRaidWarningVar, LastStandVar, ShieldWallVar
+## SavedVariables: InRaidVar, InPartyVar, InRaidWarningVar, LastStandVar, ShieldWallVar, LastStandCountDownVar, ShieldWallCountDownVar
 
 main.lua
